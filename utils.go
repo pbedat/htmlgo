@@ -10,8 +10,8 @@ import (
 
 type RawHTML string
 
-func (s RawHTML) MarshalHTML(ctx context.Context) (r []byte, err error) {
-	r = []byte(s)
+func (s RawHTML) MarshalHTML(ctx context.Context, w io.Writer) (err error) {
+	_, err = fmt.Fprint(w, s)
 	return
 }
 
@@ -29,20 +29,16 @@ func Components(comps ...HTMLComponent) HTMLComponents {
 	return HTMLComponents(comps)
 }
 
-func (hcs HTMLComponents) MarshalHTML(ctx context.Context) (r []byte, err error) {
-	buf := bytes.NewBuffer(nil)
+func (hcs HTMLComponents) MarshalHTML(ctx context.Context, w io.Writer) (err error) {
 	for _, h := range hcs {
 		if h == nil {
 			continue
 		}
-		var b []byte
-		b, err = h.MarshalHTML(ctx)
+		err = h.MarshalHTML(ctx, w)
 		if err != nil {
 			return
 		}
-		buf.Write(b)
 	}
-	r = buf.Bytes()
 	return
 }
 
@@ -50,12 +46,8 @@ func Fprint(w io.Writer, root HTMLComponent, ctx context.Context) (err error) {
 	if root == nil {
 		return
 	}
-	var b []byte
-	b, err = root.MarshalHTML(ctx)
-	if err != nil {
-		return
-	}
-	_, err = fmt.Fprint(w, string(b))
+	err = root.MarshalHTML(ctx, w)
+
 	return
 }
 

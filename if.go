@@ -1,6 +1,9 @@
 package htmlgo
 
-import "context"
+import (
+	"context"
+	"io"
+)
 
 type IfBuilder struct {
 	comps []HTMLComponent
@@ -36,11 +39,11 @@ func (b *IfBuilder) Else(comps ...HTMLComponent) (r *IfBuilder) {
 	return b
 }
 
-func (b *IfBuilder) MarshalHTML(ctx context.Context) (r []byte, err error) {
+func (b *IfBuilder) MarshalHTML(ctx context.Context, w io.Writer) (err error) {
 	if len(b.comps) == 0 {
 		return
 	}
-	return HTMLComponents(b.comps).MarshalHTML(ctx)
+	return HTMLComponents(b.comps).MarshalHTML(ctx, w)
 }
 
 type IfFuncBuilder struct {
@@ -77,9 +80,9 @@ func (b *IfFuncBuilder) Else(f func() HTMLComponent) (r *IfFuncBuilder) {
 	return b
 }
 
-func (b *IfFuncBuilder) MarshalHTML(ctx context.Context) (r []byte, err error) {
+func (b *IfFuncBuilder) MarshalHTML(ctx context.Context, w io.Writer) (err error) {
 	if b.f == nil {
 		return
 	}
-	return b.f().MarshalHTML(ctx)
+	return b.f().MarshalHTML(ctx, w)
 }

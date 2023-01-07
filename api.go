@@ -1,5 +1,4 @@
 /*
-
 ## htmlgo
 
 Type safe and modularize way to generate html on server side.
@@ -10,22 +9,22 @@ Download the package with `go get -v github.com/theplant/htmlgo` and import the 
 	)
 
 also checkout full API documentation at: https://godoc.org/github.com/theplant/htmlgo
-
 */
 package htmlgo
 
 import (
 	"context"
+	"io"
 )
 
 type HTMLComponent interface {
-	MarshalHTML(ctx context.Context) ([]byte, error)
+	MarshalHTML(ctx context.Context, w io.Writer) error
 }
 
-type ComponentFunc func(ctx context.Context) (r []byte, err error)
+type ComponentFunc func(ctx context.Context, w io.Writer) (err error)
 
-func (f ComponentFunc) MarshalHTML(ctx context.Context) (r []byte, err error) {
-	return f(ctx)
+func (f ComponentFunc) MarshalHTML(ctx context.Context, w io.Writer) (err error) {
+	return f(ctx, w)
 }
 
 type MutableAttrHTMLComponent interface {

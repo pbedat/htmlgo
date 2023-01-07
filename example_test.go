@@ -3,6 +3,7 @@ package htmlgo_test
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -62,12 +63,12 @@ Use RawHTML and Component
 */
 func ExampleTag_03rawhtmlandcomponent() {
 	userProfile := func(username string, avatarURL string) HTMLComponent {
-		return ComponentFunc(func(ctx context.Context) (r []byte, err error) {
+		return ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
 			return Div(
 				H1(username).Class("profileName"),
 				Img(avatarURL).Class("profileImage"),
 				RawHTML("<svg>complicated svg</svg>\n"),
-			).Class("userProfile").MarshalHTML(ctx)
+			).Class("userProfile").MarshalHTML(ctx, w)
 		})
 	}
 
@@ -121,7 +122,7 @@ func (b *MySelectBuilder) Selected(selected string) (r *MySelectBuilder) {
 	return b
 }
 
-func (b *MySelectBuilder) MarshalHTML(ctx context.Context) (r []byte, err error) {
+func (b *MySelectBuilder) MarshalHTML(ctx context.Context, w io.Writer) (err error) {
 	opts := []HTMLComponent{}
 	for _, op := range b.options {
 		var opt HTMLComponent
@@ -132,7 +133,7 @@ func (b *MySelectBuilder) MarshalHTML(ctx context.Context) (r []byte, err error)
 		}
 		opts = append(opts, opt)
 	}
-	return Select(opts...).MarshalHTML(ctx)
+	return Select(opts...).MarshalHTML(ctx, w)
 }
 
 /*
@@ -244,15 +245,15 @@ func ExampleTag_06httphandler() {
 	}
 
 	userStatus := func() HTMLComponent {
-		return ComponentFunc(func(ctx context.Context) (r []byte, err error) {
+		return ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
 
 			if currentUser, ok := ctx.Value("currentUser").(*User); ok {
 				return Div(
 					Text(currentUser.Name),
-				).Class("username").MarshalHTML(ctx)
+				).Class("username").MarshalHTML(ctx, w)
 			}
 
-			return Div(Text("Login")).Class("login").MarshalHTML(ctx)
+			return Div(Text("Login")).Class("login").MarshalHTML(ctx, w)
 		})
 	}
 

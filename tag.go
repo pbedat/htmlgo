@@ -1,11 +1,11 @@
 package htmlgo
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"html"
+	"io"
 	"strings"
 )
 
@@ -267,7 +267,7 @@ func (b *HTMLTagBuilder) PrependChildren(c ...HTMLComponent) (r *HTMLTagBuilder)
 	return b
 }
 
-func (b *HTMLTagBuilder) MarshalHTML(ctx context.Context) (r []byte, err error) {
+func (b *HTMLTagBuilder) MarshalHTML(ctx context.Context, w io.Writer) (err error) {
 	class := strings.TrimSpace(strings.Join(b.classNames, " "))
 	if len(class) > 0 {
 		b.Attr("class", class)
@@ -331,28 +331,24 @@ func (b *HTMLTagBuilder) MarshalHTML(ctx context.Context) (r []byte, err error) 
 		attrStr = " " + strings.Join(attrSegs, " ")
 	}
 
-	buf := bytes.NewBuffer(nil)
 	newline := ""
 
 	if b.omitEndTag {
 		newline = "\n"
 	}
-	buf.WriteString(fmt.Sprintf("\n<%s%s>%s", b.tag, attrStr, newline))
+	fmt.Fprintf(w, "\n<%s%s>%s", b.tag, attrStr, newline)
 	if !b.omitEndTag {
 		if len(cs) > 0 {
 			// buf.WriteString("\n")
 			for _, c := range cs {
-				var child []byte
-				child, err = c.MarshalHTML(ctx)
+				err = c.MarshalHTML(ctx, w)
 				if err != nil {
 					return
 				}
-				buf.Write(child)
 			}
 		}
-		buf.WriteString(fmt.Sprintf("</%s>\n", b.tag))
+		fmt.Fprintf(w, "</%s>\n", b.tag)
 	}
-	r = buf.Bytes()
 	return
 }
 
