@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"text/template"
 
 	. "github.com/theplant/htmlgo"
 	"github.com/theplant/testingutils"
@@ -73,8 +74,11 @@ func TestHtmlTag(t *testing.T) {
 	}
 }
 
-func BenchmarkList(b *testing.B) {
+func BenchmarkHtmlgo(b *testing.B) {
 	f, err := os.OpenFile("/dev/null", os.O_WRONLY, 0600)
+	if err != nil {
+		b.Fatal(err)
+	}
 
 	w := bufio.NewWriter(f)
 
@@ -86,10 +90,6 @@ func BenchmarkList(b *testing.B) {
 			children = append(children, Li(nested(i), Text(fmt.Sprint(i))))
 		}
 
-		if err != nil {
-			b.Fatal(err)
-		}
-
 		Ul(children).MarshalHTML(context.TODO(), w)
 		//Fprint(f, Ul(children), context.TODO())
 	}
@@ -99,14 +99,39 @@ func nested(j int) HTMLComponent {
 
 	root := Div(Text("test"))
 
-	current := root
+	var children HTMLComponents
 
-	for i := 0; i < 50; i++ {
-		next := Div(Text("test"), Text(fmt.Sprint(i, j)))
-
-		current.Children(next)
-		current = next
+	for i := 0; i < 200; i++ {
+		children = append(children, Div(Text("test"), Text(fmt.Sprint(i, j))))
 	}
 
-	return root
+	return root.Children(children)
+}
+
+func BenchmarkTemplate(b *testing.B) {
+	tpl, _ := template.New("test").Parse(`<ul>{{range $i, $_ := .Items}}<li>
+<div>
+test
+	{{ range $j, $_ := $.Items}}<div>test {{$i}} {{$j}}</div>{{end}}
+</div>
+</li>{{end}}</ul>`)
+
+	f, err := os.OpenFile("/dev/null", os.O_WRONLY, 0600)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	w := bufio.NewWriter(f)
+
+	items := make([]byte, 200)
+
+	for i := 0; i < b.N; i++ {
+		if err := tpl.Execute(w, struct {
+			Items []byte
+		}{
+			Items: items,
+		}); err != nil {
+			b.Fatal(err)
+		}
+	}
 }
