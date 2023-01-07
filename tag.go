@@ -336,7 +336,11 @@ func (b *HTMLTagBuilder) MarshalHTML(ctx context.Context, w io.Writer) (err erro
 	if b.omitEndTag {
 		newline = "\n"
 	}
-	fmt.Fprintf(w, "\n<%s%s>%s", b.tag, attrStr, newline)
+	io.WriteString(w, "\n<")
+	io.WriteString(w, b.tag)
+	io.WriteString(w, attrStr)
+	io.WriteString(w, ">")
+	io.WriteString(w, newline)
 	if !b.omitEndTag {
 		if len(cs) > 0 {
 			// buf.WriteString("\n")
@@ -347,7 +351,9 @@ func (b *HTMLTagBuilder) MarshalHTML(ctx context.Context, w io.Writer) (err erro
 				}
 			}
 		}
-		fmt.Fprintf(w, "</%s>\n", b.tag)
+		io.WriteString(w, "</")
+		io.WriteString(w, b.tag)
+		io.WriteString(w, ">\n")
 	}
 	return
 }
